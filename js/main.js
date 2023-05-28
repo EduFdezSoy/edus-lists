@@ -12,6 +12,9 @@ mainLoop();
 
 // init
 async function init() {
+  // load a if there is a list being shared to us
+  readSharedList();
+
   const listName = await askForListName();
   const titleContainer = document.getElementById("title");
   titleContainer.getElementsByTagName("h3")[0].innerText =
@@ -239,10 +242,12 @@ async function getListFromServer(listName) {
   syncing(true);
 
   // retrieve
-  const resultList = await pb.collection(config.collection_name).getList(1, 200, {
-    fields: "id, done, task, every, lastTime, name",
-    filter: `name="${listName}"`,
-  });
+  const resultList = await pb
+    .collection(config.collection_name)
+    .getList(1, 200, {
+      fields: "id, done, task, every, lastTime, name",
+      filter: `name="${listName}"`,
+    });
 
   syncing(false);
   return resultList.items;
@@ -320,5 +325,25 @@ function syncing(bool) {
     loading.style.display = "block";
   } else {
     loading.style.display = "none";
+  }
+}
+
+function readSharedList() {
+  let pathVar = window.location.pathname;
+  if (pathVar != "" && pathVar != "/") {
+    pathVar = decodeURI(pathVar);
+    pathVar = pathVar.replace("/", "");
+
+    window.location.pathname = "/";
+
+    // set as current list
+    localStorage.setItem("listName", pathVar);
+
+    // add to the used lists list
+    let listNamesArray = JSON.parse(localStorage.getItem("listNamesArray")) || [];
+    if (!listNamesArray.includes(pathVar)) {
+      listNamesArray.push(pathVar);
+      localStorage.setItem("listNamesArray", JSON.stringify(listNamesArray));
+    }
   }
 }
