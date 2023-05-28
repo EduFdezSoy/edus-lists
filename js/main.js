@@ -16,10 +16,21 @@ async function init() {
   readSharedList();
 
   const listName = await askForListName();
+
+  // set titles
   const titleContainer = document.getElementById("title");
-  titleContainer.getElementsByTagName("h3")[0].innerText =
-    titleContainer.getElementsByTagName("h1")[0].innerText;
-  titleContainer.getElementsByTagName("h1")[0].innerText = listName;
+
+  const h3content = titleContainer.getElementsByTagName("h3")[0].innerHTML;
+  const h1content = titleContainer.getElementsByTagName("h1")[0].innerHTML;
+  titleContainer.getElementsByTagName("h3")[0].innerHTML = h1content;
+  titleContainer.getElementsByTagName("h1")[0].innerHTML = listName + h3content;
+
+  // set the url to this task
+  document.getElementById("listLink").addEventListener("click", (event) => {
+    event.preventDefault();
+    navigator.clipboard.writeText(window.location.href + listName);
+    alert("Task link copied to clipboard");
+  });
 
   //debug
   // console.log(listName);
@@ -340,7 +351,8 @@ function readSharedList() {
     localStorage.setItem("listName", pathVar);
 
     // add to the used lists list
-    let listNamesArray = JSON.parse(localStorage.getItem("listNamesArray")) || [];
+    let listNamesArray =
+      JSON.parse(localStorage.getItem("listNamesArray")) || [];
     if (!listNamesArray.includes(pathVar)) {
       listNamesArray.push(pathVar);
       localStorage.setItem("listNamesArray", JSON.stringify(listNamesArray));
