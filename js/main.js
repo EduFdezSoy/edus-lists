@@ -1,7 +1,8 @@
 import PocketBase from "./pocketbase.es.mjs";
 import ms from "./ms.js";
+import config from "./config.js";
 
-const pb = new PocketBase("https://lists.edufdez.es");
+const pb = new PocketBase(config.base_url);
 const taskList = document.getElementById("tasks");
 const completedTasksList = document.getElementById("completedTasks");
 let listObj = null;
@@ -238,7 +239,7 @@ async function getListFromServer(listName) {
   syncing(true);
 
   // retrieve
-  const resultList = await pb.collection("lists").getList(1, 200, {
+  const resultList = await pb.collection(config.collection_name).getList(1, 200, {
     fields: "id, done, task, every, lastTime, name",
     filter: `name="${listName}"`,
   });
@@ -249,7 +250,7 @@ async function getListFromServer(listName) {
 
 async function updateEntry(listObj) {
   syncing(true);
-  await pb.collection("lists").update(listObj.id, listObj);
+  await pb.collection(config.collection_name).update(listObj.id, listObj);
   syncing(false);
 }
 
@@ -259,7 +260,7 @@ async function addEntryToServer(listName, listObj) {
   listObj.name = listName;
 
   // update
-  const record = await pb.collection("lists").create(listObj);
+  const record = await pb.collection(config.collection_name).create(listObj);
 
   syncing(false);
   return record;
