@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edu's Lists</title>
+    <link rel="stylesheet" href="css/main.css" />
+  </head>
+
+  <body>
+    <!-- title and buttons -->
+    <div id="title">
+      <div class="titles">
+        <h3 class="not-important-text"></h3>
+        <h1>Edu's Lists</h1>
+      </div>
+      <div class="buttons">
+        <button id="addTaskBtn">Add Task</button>
+        <select id="recentTasksList">
+          <option disabled selected>Load Another list</option>
+          <option>Add list</option>
+          <option disabled>──────────────</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- add task modal form -->
+    <div id="newTask">
+      <h3>Add new Task</h3>
+      <div class="floating">
+        <label for="task">Task</label>
+        <span class="not-important-text" style="font-size: small"
+          >required</span
+        >
+        <input type="text" id="task" placeholder="to-do something" />
+      </div>
+      <div class="floating">
+        <label for="task">Periodicity</label>
+        <div>
+          <input type="number" id="every" placeholder="-" />
+          <select id="everyUnit">
+            <option value=""></option>
+            <option value="s">Secs</option>
+            <option value="m">Mins</option>
+            <option value="h">Hours</option>
+            <option value="d" selected>Days</option>
+            <option value="w">Weeks</option>
+            <option value="y">Years</option>
+          </select>
+        </div>
+      </div>
+
+      <br />
+      <br />
+      <br />
+      <br />
+      <div>
+        <button id="add">Add Task</button>
+        <button id="close">Close</button>
+      </div>
+    </div>
+
+    <!-- those are the lists -->
+    <ul class="no-list-decorator" id="tasks"></ul>
+    <ul class="no-list-decorator" id="completedTasks"></ul>
+
+    <!-- ask list name modal form -->
+    <div id="askForListName">
+      <h2>Identify your list!</h2>
+      <p>
+        This name will be the one and only for your list, you can retrieve it
+        just using the same name
+      </p>
+      <input type="text" id="listName" />
+      <button>Get or Create your List</button>
+      <p>
+        ⚠️ <b>Please note:</b> Everyone with this name will be able to retrieve
+        your list!
+      </p>
+    </div>
+
+    <!-- messages -->
+    <div id="loading">Loading...</div>
+    <div id="syncing">syncing</div>
+
+    <!-- footer -->
+    <section id="footer">
+      <p>
+        Made with <span title="love">💖</span> by
+        <a href="https://edufdez.es/" target="_blank">EduFdezSoy</a>.
+        <br />
+        <span class="not-important-text" style="font-size: small">v1.1a</span>
+      </p>
+    </section>
+
+    <script type="module" src="js/main.js?v1.1a"></script>
+  </body>
+</html>

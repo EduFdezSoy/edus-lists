@@ -1,0 +1,164 @@
+* {
+  user-select: none;
+  font-family: sans-serif;
+}
+
+body {
+  min-height: 95vh;
+  margin: 0;
+  padding: 0;
+}
+
+input {
+  margin: 5px 5px 10px 0;
+}
+
+.no-list-decorator {
+  margin: 0;
+  list-style: none;
+}
+
+input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.not-important-text {
+  opacity: 0.3;
+}
+
+label {
+  line-height: 175%;
+}
+
+#title {
+  margin: 25px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+#title .titles {
+  flex-grow: 4;
+}
+
+#title .buttons {
+  align-self: flex-end;
+}
+
+#title h3,
+#title h1 {
+  margin: 0;
+}
+
+#title h1:first-letter {
+  text-transform: capitalize;
+}
+
+#addTaskBtn {
+  margin: 5px 25px 0 25px;
+  visibility: hidden;
+}
+
+#recentTasksList {
+  margin: 5px 0 0 0;
+  visibility: hidden;
+}
+
+#recentTasksList option[disabled][selected] {
+  display: none;
+}
+
+#tasks {
+  margin-bottom: 25px;
+  display: none;
+}
+
+#completedTasks {
+  opacity: 50%;
+  margin-bottom: 25px;
+}
+
+#askForListName {
+  display: none;
+  background-color: #00000010;
+  color: black;
+  margin: 25px;
+  padding: 30px;
+}
+
+#newTask {
+  display: none;
+  background-color: #00000010;
+  color: black;
+  margin: 25px;
+  padding: 30px;
+}
+
+#newTask .floating {
+  float: left;
+  margin-right: 20px;
+}
+
+#newTask > input,
+#newTask > label {
+  display: block;
+}
+
+#newTask #task {
+  width: 100%;
+  max-width: 500px;
+}
+
+#newTask #every {
+  width: 40px;
+}
+
+#newTask button {
+  margin: 10px 5px 0 0;
+}
+
+#footer {
+  position: sticky;
+  top: 100vh;
+  padding-top: 25px;
+  padding-bottom: 25px;
+  text-align: center;
+}
+
+#footer a {
+  text-decoration: none;
+  color: inherit;
+}
+
+#footer a:hover {
+  text-decoration: underline;
+}
+
+#loading {
+  display: none;
+  margin: 75px;
+}
+
+#syncing {
+  display: none;
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  font-size: small;
+  opacity: 0.3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: rgb(200, 200, 200);
+    background: rgb(20, 20, 20);
+  }
+
+  #askForListName {
+    background-color: #fffffff0;
+  }
+
+  #newTask {
+    background-color: #fffffff0;
+  }
+}
