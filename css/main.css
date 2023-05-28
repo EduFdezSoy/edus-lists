@@ -1,3 +1,13 @@
+:root {
+  --text-color: black;
+  --text-color-dark: rgb(200, 200, 200);
+
+  --bg-color-dark: rgb(20, 20, 20);
+  
+  --forms-bg-color: #00000010;
+  --forms-bg-color-dark: #fffffff0;
+}
+
 * {
   user-select: none;
   font-family: sans-serif;
@@ -28,6 +38,16 @@ input[type="checkbox"] {
 
 label {
   line-height: 175%;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
+
+.icon path {
+  fill: var(--text-color);
 }
 
 #title {
@@ -80,16 +100,16 @@ label {
 
 #askForListName {
   display: none;
-  background-color: #00000010;
-  color: black;
+  background-color: var(--forms-bg-color);
+  color: var(--text-color);
   margin: 25px;
   padding: 30px;
 }
 
 #newTask {
   display: none;
-  background-color: #00000010;
-  color: black;
+  background-color: var(--forms-bg-color);
+  color: var(--text-color);
   margin: 25px;
   padding: 30px;
 }
@@ -150,15 +170,19 @@ label {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    color: rgb(200, 200, 200);
-    background: rgb(20, 20, 20);
+    color: var(--text-color-dark);
+    background: var(--bg-color-dark);
+  }
+
+  .icon path {
+    fill: var(--text-color-dark);
   }
 
   #askForListName {
-    background-color: #fffffff0;
+    background-color: var(--forms-bg-color-dark);
   }
 
   #newTask {
-    background-color: #fffffff0;
+    background-color: var(--forms-bg-color-dark);
   }
 }
