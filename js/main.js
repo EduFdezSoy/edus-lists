@@ -352,19 +352,44 @@ function readSharedListAndReload() {
  * @param {string} listName
  */
 function setTitles(listName) {
+  const listUrl = encodeURI(window.location.href + listName);
   const titleContainer = document.getElementById("title");
   titleContainer.h3 = titleContainer.getElementsByTagName("h3")[0].innerHTML;
   titleContainer.h1 = titleContainer.getElementsByTagName("h1")[0].innerHTML;
 
   // set the app title to the h3 top and the title + the copy link button to the h1
   titleContainer.getElementsByTagName("h3")[0].innerHTML = titleContainer.h1;
-  titleContainer.getElementsByTagName("h1")[0].innerHTML =
-    listName + titleContainer.h3;
+  const h1Content = document.createElement("span");
+  h1Content.innerHTML = listName + titleContainer.h3;
+  titleContainer.getElementsByTagName("h1")[0].innerHTML = h1Content.outerHTML;
+
+  // set pointer to title
+  titleContainer.getElementsByTagName("h1")[0].classList.add("pointer");
+
+  // on hover iluminate the link icon
+  titleContainer.querySelector("h1 span").addEventListener("mouseover", () => {
+    titleContainer.querySelector("#title .icon").style.opacity = 1;
+  });
+  // and when the mouse leaves...
+  titleContainer.querySelector("h1 span").addEventListener("mouseout", () => {
+    titleContainer.querySelector("#title .icon").style.opacity = 0.3;
+  });
+
+  // set the url to the title
+  titleContainer.querySelector("h1 span").addEventListener("click", () => {
+    navigator.clipboard.writeText(listUrl);
+    // TODO: change this alert with some nice css
+    alert("Task link copied to clipboard");
+  });
+
+  // set the list url to the href so the user can see the path on hover
+  titleContainer.getElementsByTagName("a")[0].setAttribute("href", listUrl);
 
   // set the url to this task
   document.getElementById("listLink").addEventListener("click", (event) => {
     event.preventDefault();
-    navigator.clipboard.writeText(encodeURI(window.location.href + listName));
+    navigator.clipboard.writeText(listUrl);
+    // TODO: change this alert with some nice css
     alert("Task link copied to clipboard");
   });
 }
