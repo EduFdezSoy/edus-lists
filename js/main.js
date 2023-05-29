@@ -422,6 +422,19 @@ function getListNameFromTheListsArray() {
 }
 
 /**
+ * Removes a name from the list array in the local storage
+ * the array constains the used lists so the user can change betweeb them easyly
+ * 
+ * @param {string} listName 
+ */
+function removeListNameFromTheListsArray(listName) {
+  let list = JSON.parse(localStorage.getItem("listNamesArray")) || [];
+  const index = list.indexOf(listName);
+  if (index > -1) list.splice(index, 1);
+  localStorage.setItem("listNamesArray", JSON.stringify(list));
+}
+
+/**
  * sets the current list name to the local storage
  *
  * @param {string} listName
@@ -539,9 +552,11 @@ function setupLoadAnotherListDropdown() {
         window.location.reload();
         break;
 
-      // removes the current list name from the list (may add another and reload)
-      case "remove":
-        // TODO: the remove list from the dropdown
+      // removes the current list name from the list, sets another and reload the page
+      case "remove this list":
+        removeListNameFromTheListsArray(getCurrentListName());
+        setCurrentListName(getListNameFromTheListsArray()[0]);
+        window.location.reload();
         break;
 
       // when an item is selected we set it as the current active list name and reload the page
