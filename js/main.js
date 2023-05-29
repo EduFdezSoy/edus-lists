@@ -5,160 +5,85 @@ import config from "./config.js";
 const pb = new PocketBase(config.base_url);
 const taskList = document.getElementById("tasks");
 const completedTasksList = document.getElementById("completedTasks");
-let listObj = null;
+let taskListObj = null;
 
 init();
 mainLoop();
 
-// init
+/**
+ * Init function
+ * performed only at the app start, will fetch the tasks and present them or ask for a list if needed
+ */
 async function init() {
   // load a if there is a list being shared to us
-  readSharedList();
+  readSharedListAndReload();
 
+  // will return the list name if
   const listName = await askForListName();
-
-  // set titles
-  const titleContainer = document.getElementById("title");
-
-  const h3content = titleContainer.getElementsByTagName("h3")[0].innerHTML;
-  const h1content = titleContainer.getElementsByTagName("h1")[0].innerHTML;
-  titleContainer.getElementsByTagName("h3")[0].innerHTML = h1content;
-  titleContainer.getElementsByTagName("h1")[0].innerHTML = listName + h3content;
-
-  // set the url to this task
-  document.getElementById("listLink").addEventListener("click", (event) => {
-    event.preventDefault();
-    navigator.clipboard.writeText(encodeURI(window.location.href + listName));
-    alert("Task link copied to clipboard");
-  });
-
-  //debug
-  // console.log(listName);
 
   loading(true);
 
+  // set titles
+  setTitles(listName);
+
   // retrieve saved data
-  listObj = await getListFromServer(listName);
+  taskListObj = await getListFromServer(listName);
 
-  // show "add task" button
-  const showAddTaskBtn = document.getElementById("addTaskBtn");
-  showAddTaskBtn.style.visibility = "visible";
-  showAddTaskBtn.addEventListener("click", () => {
-    if (showAddTaskBtn.getAttribute("visible") == "true") {
-      showAddTaskBtn.setAttribute("visible", "false");
-      document.getElementById("newTask").style.display = "none";
-    } else {
-      showAddTaskBtn.setAttribute("visible", "true");
-      document.getElementById("newTask").style.display = "block";
-    }
-  });
-
-  // close "add task" button
-  const closeAddTaskBtn = document.getElementById("close");
-  closeAddTaskBtn.addEventListener("click", () => {
-    document.getElementById("newTask").style.display = "none";
-    showAddTaskBtn.setAttribute("visible", "false");
-  });
-
-  // add task button and form
-  const addTaskBtn = document.getElementById("add");
-  addTaskBtn.addEventListener("click", async () => {
-    const taskForm = document.getElementById("task").value;
-    const taskEveryForm = document.getElementById("every").value;
-    const taskEveryUnitForm = document.getElementById("everyUnit").value;
-
-    let obj = {
-      task: taskForm,
-    };
-
-    if (taskEveryForm != "" && taskEveryUnitForm != "") {
-      obj.every = taskEveryForm + taskEveryUnitForm;
-    }
-
-    listObj.push(await addEntryToServer(listName, obj));
-
-    printTasks(listObj);
-
-    // clear form
-    document.getElementById("task").value = "";
-    document.getElementById("every").value = "";
-  });
-
-  // set "load another list" dropdown button
-  const loadAnotherListDropdwn = document.getElementById("recentTasksList");
-  loadAnotherListDropdwn.style.visibility = "visible";
-  loadAnotherListDropdwn.addEventListener("change", () => {
-    const selected = loadAnotherListDropdwn.value.toLocaleLowerCase();
-    // reset selection
-    var options = document.querySelectorAll("#recentTasksList option");
-    for (var i = 0, l = options.length; i < l; i++) {
-      options[i].selected = options[i].defaultSelected;
-    }
-
-    switch (selected) {
-      case "add list":
-        localStorage.removeItem("listName");
-        window.location.reload();
-        break;
-
-      case "remove":
-        // TODO
-        break;
-
-      default:
-        localStorage.setItem("listName", selected.toLocaleLowerCase());
-        window.location.reload();
-        break;
-    }
-  });
-
-  // set "load another list" dropdown button options
-  let listNamesArray = JSON.parse(localStorage.getItem("listNamesArray")) || [
-    "(no more lists added)",
-  ];
-  listNamesArray.forEach((name) => {
-    let option = document.createElement("option");
-    option.innerText = name;
-    loadAnotherListDropdwn.appendChild(option);
-  });
+  setupAddTaskButton();
+  setupCloseAddTaskFormButton();
+  setupAddTaskFormButton(taskListObj);
+  setupLoadAnotherListDropdown();
 
   // show lists
   taskList.style.display = "block";
   completedTasksList.style.display = "block";
 
-  printTasks(listObj);
+  printTasks(taskListObj);
   loading(false);
 }
 
-// main loop
+/**
+ * Main app loop
+ * this loops mainly monitors the tasks to repeat the ones that needs to repeat
+ */
 function mainLoop() {
+  const loopTime = 1000; // execute each second
   setTimeout(() => {
     const now = new Date().getTime();
 
     for (let i = 0; i < completedTasksList.children.length; i++) {
-      const element = completedTasksList.children[i];
-      const lastTime = element.getAttribute("lastTime");
-      const every = element.getAttribute("every");
+      const task = completedTasksList.children[i];
+      task.lastTime = task.getAttribute("lastTime");
+      task.every = task.getAttribute("every");
 
-      if (lastTime == "" || every == "") {
+      // checks if the task is a "one time task"
+      if (task.lastTime == "" || task.every == "") {
         continue;
       }
 
-      if (+lastTime + ms(every) < now) {
-        const checkbox = element.getElementsByTagName("input")[0];
+      // if the task will repeat we check if its due to be re-added to the to-do list
+      // TODO: change the algorithm here, re-add the tasks at a +10% the repeat time (so a 10h task will repeat at 9h instead)
+      if (+task.lastTime + ms(task.every) < now) {
+        const checkbox = task.getElementsByTagName("input")[0];
         checkbox.checked = false;
-        onTaskChanged(checkbox, element.getAttribute("id"));
+        onTaskChanged(checkbox, task.getAttribute("id"));
       }
     }
 
     mainLoop();
-  }, 1000);
+  }, loopTime);
 }
 
-// on change event listener
+/**
+ * event listener for marked or unmarked tasks
+ *
+ * @param {element} checkbox the literal checkbox DOM element
+ * @param {string} listId element id for the list entry
+ */
 window.onTaskChanged = function (checkbox, listId) {
   const element = document.getElementById(listId);
 
+  // move the element from one list to another (done or not done)
   if (checkbox.checked == true) {
     element.parentNode.removeChild(element);
     completedTasksList.appendChild(element);
@@ -168,29 +93,48 @@ window.onTaskChanged = function (checkbox, listId) {
     tasks.appendChild(element);
   }
 
-  listObj.find((o) => o.id == listId.split("-")[0]).done = checkbox.checked;
-  updateEntry(listObj.find((o) => o.id == listId.split("-")[0]));
+  // update the element in the list of tasks and send to server
+  taskListObj.find((o) => o.id == listId.split("-")[0]).done = checkbox.checked;
+  updateEntry(taskListObj.find((o) => o.id == listId.split("-")[0]));
 };
 
+/**
+ * sets an attributte "lastTime" to a list element
+ * it represents the last time it was marked
+ *
+ * @param {string} listId element id for the list entry
+ */
 function setLastTime(listId) {
   const now = new Date().getTime();
   const element = document.getElementById(listId);
   element.setAttribute("lastTime", `${now}`);
-  listObj.find((o) => o.id == listId.split("-")[0]).lastTime = now;
 
-  // debug
-  // console.log(element);
+  // update the element in the list of tasks
+  taskListObj.find((o) => o.id == listId.split("-")[0]).lastTime = now;
 }
 
+/**
+ * translates from shorts number+letter to text
+ * like "2d" to "two days"
+ *
+ * @param {string} time
+ * @returns {string} example: two days
+ */
 function timeToText(time) {
+  // TODO: im sure there is a better way to do this
+
   // every...
   switch (time) {
     case "12h":
-      return "day two times";
+      return "day 2 times";
 
     case "24h":
     case "1d":
       return "day";
+
+    case "3.5d":
+    case "0.5w":
+      return "week 2 times";
 
     case "7d":
     case "1w":
@@ -198,24 +142,44 @@ function timeToText(time) {
 
     case "30d":
     case "4w":
-    case "1m":
       return "month";
 
+    case "1y":
+      return "year";
+
     default:
-      return time;
+      switch (time.substring(time.length - 1)) {
+        case "d":
+          return time.substring(0, time.length - 1) + " days";
+
+        case "w":
+          return time.substring(0, time.length - 1) + " weeks";
+
+        case "y":
+          return time.substring(0, time.length - 1) + " years";
+
+        default:
+          return time;
+      }
   }
 }
 
+/**
+ * Checks if there is a listName saved in the local storage and returns it
+ * OR shows the modal to ask the user for it (and returns it when inserted)
+ *
+ * @returns {string} listName
+ */
 async function askForListName() {
-  // check if list in localstorage
-  let listName = localStorage.getItem("listName");
+  // check if list in local storage
+  let listName = getCurrentListName();
   if (listName != null) return listName;
 
-  // show modal asking for list name to retrieve/create
   const modal = document.getElementById("askForListName");
   const btn = modal.getElementsByTagName("button")[0];
   const input = modal.getElementsByTagName("input")[0];
 
+  // show modal asking for list name to retrieve/create
   modal.style.display = "block";
 
   // await for a buton press
@@ -229,18 +193,9 @@ async function askForListName() {
   btn.innerText = "loading...";
   listName = input.value.toLocaleLowerCase();
 
-  // save list name to localstorage
-  localStorage.setItem("listName", listName);
-
-  // add to the used lists list
-  let listNamesArray = JSON.parse(localStorage.getItem("listNamesArray")) || [];
-  if (!listNamesArray.includes(listName)) {
-    listNamesArray.push(listName);
-    localStorage.setItem("listNamesArray", JSON.stringify(listNamesArray));
-  }
-
-  // debug
-  // localStorage.clear();
+  // save list name to local storage
+  setCurrentListName(listName);
+  setListNameToTheListsArray(listName);
 
   // hide modal
   modal.style.display = "none";
@@ -249,6 +204,12 @@ async function askForListName() {
   return listName;
 }
 
+/**
+ * gets the list from the server
+ *
+ * @param {string} listName
+ * @returns the list by the given name
+ */
 async function getListFromServer(listName) {
   syncing(true);
 
@@ -264,29 +225,46 @@ async function getListFromServer(listName) {
   return resultList.items;
 }
 
-async function updateEntry(listObj) {
+/**
+ * updates the task in the server
+ *
+ * @param {object} task tasks in this list
+ */
+async function updateEntry(task) {
   syncing(true);
-  await pb.collection(config.collection_name).update(listObj.id, listObj);
+  await pb.collection(config.collection_name).update(listObj.id, task);
   syncing(false);
 }
 
-async function addEntryToServer(listName, listObj) {
+/**
+ * adds the task to the server
+ *
+ * @param {string} listName name of this list
+ * @param {object} task tasks in this list
+ *
+ * @returns the recorded task
+ */
+async function addEntryToServer(listName, task) {
   syncing(true);
 
-  listObj.name = listName;
+  task.name = listName;
 
-  // update
-  const record = await pb.collection(config.collection_name).create(listObj);
+  const record = await pb.collection(config.collection_name).create(task);
 
   syncing(false);
   return record;
 }
 
-function printTasks(listObj) {
+/**
+ * Prints the tasks in the lists (the to-do one and the done one)
+ *
+ * @param {object} tasks
+ */
+function printTasks(tasks) {
   taskList.innerHTML = "";
   completedTasksList.innerHTML = "";
 
-  listObj.forEach((task) => {
+  tasks.forEach((task) => {
     let listEntry = document.createElement("li");
     let input = document.createElement("input");
     let label = document.createElement("label");
@@ -321,6 +299,11 @@ function printTasks(listObj) {
   });
 }
 
+/**
+ * sets a "loading" thingy in the screen so the user knows what's happening
+ *
+ * @param {boolean} bool
+ */
 function loading(bool) {
   const loading = document.getElementById("loading");
   if (bool) {
@@ -330,6 +313,11 @@ function loading(bool) {
   }
 }
 
+/**
+ * sets a "syncing" thingy in the corner of the screen so the user knows what's happening
+ *
+ * @param {boolean} bool
+ */
 function syncing(bool) {
   const loading = document.getElementById("syncing");
   if (bool) {
@@ -339,23 +327,215 @@ function syncing(bool) {
   }
 }
 
-function readSharedList() {
+/**
+ * Will load the shared list if there is one and reload the page to the base path
+ */
+function readSharedListAndReload() {
   let pathVar = window.location.pathname;
   if (pathVar != "" && pathVar != "/") {
     pathVar = decodeURI(pathVar);
     pathVar = pathVar.replace("/", "");
 
+    setCurrentListName(pathVar);
+    setListNameToTheListsArray(pathVar);
+
+    // change the path to the base
     window.location.pathname = "/";
-
-    // set as current list
-    localStorage.setItem("listName", pathVar);
-
-    // add to the used lists list
-    let listNamesArray =
-      JSON.parse(localStorage.getItem("listNamesArray")) || [];
-    if (!listNamesArray.includes(pathVar)) {
-      listNamesArray.push(pathVar);
-      localStorage.setItem("listNamesArray", JSON.stringify(listNamesArray));
-    }
   }
+}
+
+/**
+ * Sets the header titles
+ * moves the app title to a second place and puts the list title
+ * it also sets the share link in the title of the list and sets the event
+ *
+ * @param {string} listName
+ */
+function setTitles(listName) {
+  const titleContainer = document.getElementById("title");
+  titleContainer.h3 = titleContainer.getElementsByTagName("h3")[0].innerHTML;
+  titleContainer.h1 = titleContainer.getElementsByTagName("h1")[0].innerHTML;
+
+  // set the app title to the h3 top and the title + the copy link button to the h1
+  titleContainer.getElementsByTagName("h3")[0].innerHTML = titleContainer.h1;
+  titleContainer.getElementsByTagName("h1")[0].innerHTML =
+    listName + titleContainer.h3;
+
+  // set the url to this task
+  document.getElementById("listLink").addEventListener("click", (event) => {
+    event.preventDefault();
+    navigator.clipboard.writeText(encodeURI(window.location.href + listName));
+    alert("Task link copied to clipboard");
+  });
+}
+
+/**
+ * Adds a name to the lists array
+ * the array contains the used lists so the user can change between them easyly
+ *
+ * @param {string} listName
+ */
+function setListNameToTheListsArray(listName) {
+  // get the array
+  let listNamesArray = JSON.parse(localStorage.getItem("listNamesArray")) || [];
+
+  // if the array does not have this name, add the name
+  if (!listNamesArray.includes(listName)) {
+    listNamesArray.push(listName);
+    // save the array
+    localStorage.setItem("listNamesArray", JSON.stringify(listNamesArray));
+  }
+}
+
+/**
+ * get the array of lists names
+ *
+ * @returns {array} string array with the list names
+ */
+function getListNameFromTheListsArray() {
+  return JSON.parse(localStorage.getItem("listNamesArray")) || [];
+}
+
+/**
+ * sets the current list name to the local storage
+ *
+ * @param {string} listName
+ */
+function setCurrentListName(listName) {
+  localStorage.setItem("listName", listName);
+}
+
+/**
+ * returns the current list name from the local storage
+ *
+ * @returns {string | null} the current list name
+ */
+function getCurrentListName() {
+  return localStorage.getItem("listName");
+}
+
+/**
+ * removes the current list name from the local storage
+ */
+function removeCurrentListName() {
+  localStorage.removeItem("listName");
+}
+
+/**
+ * Makes the add task button in the header visible and sets the
+ * click event to show/hide the add task modal form
+ */
+function setupAddTaskButton() {
+  const showAddTaskBtn = document.getElementById("addTaskBtn");
+  const newTaskForm = document.getElementById("newTask");
+
+  showAddTaskBtn.addEventListener("click", () => {
+    if (showAddTaskBtn.getAttribute("visible") == "true") {
+      showAddTaskBtn.setAttribute("visible", "false");
+      newTaskForm.style.display = "none";
+    } else {
+      showAddTaskBtn.setAttribute("visible", "true");
+      newTaskForm.style.display = "block";
+    }
+  });
+
+  showAddTaskBtn.style.visibility = "visible";
+}
+
+/**
+ * Adds the right event to the close button inside the add task modal form
+ */
+function setupCloseAddTaskFormButton() {
+  const showAddTaskBtn = document.getElementById("addTaskBtn");
+  const closeAddTaskBtn = document.getElementById("close");
+  const newTaskForm = document.getElementById("newTask");
+
+  closeAddTaskBtn.addEventListener("click", () => {
+    newTaskForm.style.display = "none";
+    showAddTaskBtn.setAttribute("visible", "false");
+  });
+}
+
+/**
+ * Adds the click event to the add task button inside the add task modal form
+ * it adds a new task when clicked
+ *
+ * @param {object} taskList the array of task objects
+ */
+function setupAddTaskFormButton(taskList) {
+  const addTaskBtn = document.getElementById("add");
+
+  // when a new task is added... (button clicked)
+  addTaskBtn.addEventListener("click", async () => {
+    const taskForm = document.getElementById("task").value;
+    const taskEveryForm = document.getElementById("every").value;
+    const taskEveryUnitForm = document.getElementById("everyUnit").value;
+
+    let obj = {
+      task: taskForm,
+    };
+
+    if (taskEveryForm != "" && taskEveryUnitForm != "") {
+      obj.every = taskEveryForm + taskEveryUnitForm;
+    }
+
+    taskList.push(await addEntryToServer(listName, obj));
+
+    printTasks(taskList);
+
+    // clear the form
+    document.getElementById("task").value = "";
+    document.getElementById("every").value = "";
+  });
+}
+
+/**
+ * adds the event to manage list changes and to add/remove new lists
+ * then it shows the dropdown element
+ */
+function setupLoadAnotherListDropdown() {
+  // set "load another list" dropdown button
+  const loadAnotherListDropdwn = document.getElementById("recentTasksList");
+
+  loadAnotherListDropdwn.addEventListener("change", () => {
+    const selected = loadAnotherListDropdwn.value.toLocaleLowerCase();
+
+    // reset selection to always show "load another list"
+    var options = document.querySelectorAll("#recentTasksList option");
+    for (var i = 0, l = options.length; i < l; i++) {
+      options[i].selected = options[i].defaultSelected;
+    }
+
+    // do something with the selection
+    switch (selected) {
+      // opens the modal form to add a list name (clears the current and reloads the page)
+      case "add list":
+        removeCurrentListName();
+        window.location.reload();
+        break;
+
+      // removes the current list name from the list (may add another and reload)
+      case "remove":
+        // TODO: the remove list from the dropdown
+        break;
+
+      // when an item is selected we set it as the current active list name and reload the page
+      default:
+        setCurrentListName(selected.toLocaleLowerCase());
+        window.location.reload();
+        break;
+    }
+  });
+
+  // set "load another list" dropdown button options
+  let listNamesArray = getListNameFromTheListsArray();
+
+  listNamesArray.forEach((name) => {
+    let option = document.createElement("option");
+    option.innerText = name;
+    loadAnotherListDropdwn.appendChild(option);
+  });
+
+  // make it visible
+  loadAnotherListDropdwn.style.visibility = "visible";
 }
