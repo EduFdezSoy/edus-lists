@@ -75,6 +75,7 @@ label {
 
 #title .buttons {
   align-self: flex-end;
+  text-align: right;
 }
 
 #title h3,
@@ -87,12 +88,12 @@ label {
 }
 
 #addTaskBtn {
-  margin: 5px 25px 0 25px;
+  margin: 5px 0 0 25px;
   visibility: hidden;
 }
 
 #recentTasksList {
-  margin: 5px 0 0 0;
+  margin: 5px 0 0 25px;
   visibility: hidden;
 }
 
