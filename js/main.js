@@ -232,7 +232,7 @@ async function getListFromServer(listName) {
  */
 async function updateEntry(task) {
   syncing(true);
-  await pb.collection(config.collection_name).update(listObj.id, task);
+  await pb.collection(config.collection_name).update(task.id, task);
   syncing(false);
 }
 
@@ -244,7 +244,7 @@ async function updateEntry(task) {
  *
  * @returns the recorded task
  */
-async function addEntryToServer(listName, task) {
+async function addEntryToServer(listName, z) {
   syncing(true);
 
   task.name = listName;
