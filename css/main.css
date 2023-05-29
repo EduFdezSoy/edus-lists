@@ -3,7 +3,7 @@
   --text-color-dark: rgb(200, 200, 200);
 
   --bg-color-dark: rgb(20, 20, 20);
-  
+
   --forms-bg-color: #00000010;
   --forms-bg-color-dark: #fffffff0;
 }
@@ -59,6 +59,14 @@ label {
 
 #title .titles {
   flex-grow: 4;
+}
+
+#title .icon {
+  opacity: 0.3;
+}
+
+#title .icon:hover {
+  opacity: 1;
 }
 
 #title .buttons {
