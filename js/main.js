@@ -31,14 +31,14 @@ async function init() {
 
   setupAddTaskButton();
   setupCloseAddTaskFormButton();
-  setupAddTaskFormButton(taskListObj);
-  setupLoadAnotherListDropdown();
+  setupAddTaskFormButton(taskListObj, listName);
 
   // show lists
   taskList.style.display = "block";
   completedTasksList.style.display = "block";
 
   printTasks(taskListObj);
+  setupLoadAnotherListDropdown();
   loading(false);
 }
 
@@ -244,7 +244,7 @@ async function updateEntry(task) {
  *
  * @returns the recorded task
  */
-async function addEntryToServer(listName, z) {
+async function addEntryToServer(listName, task) {
   syncing(true);
 
   task.name = listName;
@@ -462,7 +462,7 @@ function setupCloseAddTaskFormButton() {
  *
  * @param {object} taskList the array of task objects
  */
-function setupAddTaskFormButton(taskList) {
+function setupAddTaskFormButton(taskList, listName) {
   const addTaskBtn = document.getElementById("add");
 
   // when a new task is added... (button clicked)
