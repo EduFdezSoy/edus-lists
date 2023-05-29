@@ -28,7 +28,7 @@ async function init() {
   // set the url to this task
   document.getElementById("listLink").addEventListener("click", (event) => {
     event.preventDefault();
-    navigator.clipboard.writeText(window.location.href + listName);
+    navigator.clipboard.writeText(encodeURI(window.location.href + listName));
     alert("Task link copied to clipboard");
   });
 
