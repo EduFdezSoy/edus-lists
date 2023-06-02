@@ -1,10 +1,12 @@
 import PocketBase from "./pocketbase.es.mjs";
 import ms from "./ms.js";
 import config from "./config.js";
+import confetti from "https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.module.mjs";
 
 const pb = new PocketBase(config.base_url);
 const taskList = document.getElementById("tasks");
 const completedTasksList = document.getElementById("completedTasks");
+const mousePos = { x: null, y: null };
 let taskListObj = null;
 
 init();
@@ -37,8 +39,15 @@ async function init() {
   taskList.style.display = "block";
   completedTasksList.style.display = "block";
 
+  // setup mouse poss event
+  window.onmousemove = (e) => {
+    mousePos.x = e.clientX;
+    mousePos.y = e.clientY;
+  };
+
   printTasks(taskListObj);
   setupLoadAnotherListDropdown();
+
   loading(false);
 }
 
@@ -85,6 +94,10 @@ window.onTaskChanged = function (checkbox, listId) {
 
   // move the element from one list to another (done or not done)
   if (checkbox.checked == true) {
+    if (element.parentNode.childElementCount == 1) {
+      fireConfetti();
+    }
+
     element.parentNode.removeChild(element);
     completedTasksList.appendChild(element);
     setLastTime(listId);
@@ -424,8 +437,8 @@ function getListNameFromTheListsArray() {
 /**
  * Removes a name from the list array in the local storage
  * the array constains the used lists so the user can change betweeb them easyly
- * 
- * @param {string} listName 
+ *
+ * @param {string} listName
  */
 function removeListNameFromTheListsArray(listName) {
   let list = JSON.parse(localStorage.getItem("listNamesArray")) || [];
@@ -578,4 +591,65 @@ function setupLoadAnotherListDropdown() {
 
   // make it visible
   loadAnotherListDropdwn.style.visibility = "visible";
+}
+
+/**
+ * Fires confetti in the given coordinates
+ *
+ * @param {number} x horizontal screen position
+ * @param {number} y vertical screen position
+ */
+async function fireConfetti() {
+  let defaults = {
+    origin: {
+      x: mousePos.x / window.innerWidth,
+      y: mousePos.y / window.innerHeight,
+    },
+    spread: 360,
+    ticks: 50,
+    gravity: 0,
+    decay: 0.94,
+    startVelocity: 30,
+    shapes: ["star"],
+    colors: ["FFE400", "FFBD00", "E89400", "FFCA6C", "FDFFB8"],
+  };
+
+  let stars = {
+    ...defaults,
+    particleCount: 20,
+    scalar: 1.2,
+    shapes: ["star"],
+  };
+
+  let normalConfetti = {
+    ...defaults,
+    particleCount: 50,
+    scalar: 0.75,
+    shapes: ["square"],
+    colors: [
+      "cdb4db",
+      "ffc8dd",
+      "ffafcc",
+      "bde0fe",
+      "a2d2ff",
+      "FEEA00",
+      "6A66A3",
+      "EB5E28",
+    ],
+  };
+
+  confetti(stars);
+
+  setTimeout(() => {
+    confetti(normalConfetti);
+  }, 100);
+  setTimeout(() => {
+    confetti(stars);
+  }, 200);
+  setTimeout(() => {
+    confetti(normalConfetti);
+  }, 300);
+  setTimeout(() => {
+    confetti(stars);
+  }, 400);
 }
