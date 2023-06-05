@@ -54,6 +54,19 @@ label {
   fill: var(--text-color);
 }
 
+.icon[name="delete"] {
+  margin-left: 2px;
+  visibility: hidden;
+  opacity: 0.3;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+}
+
+.icon[name="delete"]:hover {
+  opacity: 1;
+}
+
 #title {
   margin: 25px;
   display: flex;

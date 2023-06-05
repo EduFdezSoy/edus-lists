@@ -112,6 +112,59 @@ window.onTaskChanged = function (checkbox, listId) {
 };
 
 /**
+ * event listener for when hovering a task
+ *
+ * @param {bool} isHover
+ * @param {string} taskId
+ */
+window.onTaskHovered = function (isHover, taskId) {
+  const listEntry = document.getElementById(taskId + "-li");
+  const icons = listEntry.getElementsByTagName("svg");
+
+  if (isHover) {
+    for (let i = 0; i < icons.length; i++) {
+      setSVGVisible(true, icons[i]);
+    }
+  } else {
+    for (let i = 0; i < icons.length; i++) {
+      setSVGVisible(false, icons[i]);
+    }
+  }
+};
+
+/**
+ * makes an svg visible with a given color
+ *
+ * @param {boolean} makeVisible
+ * @param {SVGElement} element
+ * @param {string} color not required if @makeVisible set to true
+ */
+window.setSVGVisible = function (makeVisible, element, color = null) {
+  if (makeVisible) {
+    element.style.visibility = "visible";
+    element.getElementsByTagName("path")[0].style.fill = color;
+  } else {
+    setTimeout(() => {
+      element.style.visibility = "";
+      element.getElementsByTagName("path")[0].style.fill = "";
+    }, 100);
+  }
+};
+
+/**
+ * Removes a task from the list AND the server
+ * 
+ * @param {string} taskId 
+ */
+window.removeTaskOnSVGClick = function (taskId) {
+  // search task in list and remove
+  taskListObj = taskListObj.filter(el => el.id !== taskId);
+
+  removeEntryFromServer(taskId);
+  printTasks(taskListObj);
+}
+
+/**
  * sets an attributte "lastTime" to a list element
  * it represents the last time it was marked
  *
@@ -230,7 +283,6 @@ async function getListFromServer(listName) {
   const resultList = await pb
     .collection(config.collection_name)
     .getList(1, 200, {
-      fields: "id, done, task, every, lastTime, name",
       filter: `name="${listName}"`,
     });
 
@@ -269,6 +321,17 @@ async function addEntryToServer(listName, task) {
 }
 
 /**
+ * removes a task from the server
+ * 
+ * @param {string} taskId 
+ */
+async function removeEntryFromServer(taskId) {
+  syncing(true);
+  await pb.collection(config.collection_name).delete(taskId);
+  syncing(false);
+}
+
+/**
  * Prints the tasks in the lists (the to-do one and the done one)
  *
  * @param {object} tasks
@@ -278,32 +341,53 @@ function printTasks(tasks) {
   completedTasksList.innerHTML = "";
 
   tasks.forEach((task) => {
+    // create elements we need
     let listEntry = document.createElement("li");
     let input = document.createElement("input");
     let label = document.createElement("label");
     let span = document.createElement("span");
+    let deleteSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
+    // form a task entry
     listEntry.setAttribute("id", `${task.id}-li`);
     listEntry.setAttribute("every", `${task.every}`);
     listEntry.setAttribute("lastTime", `${task.lastTime}`);
+
     input.setAttribute("id", `${task.id}`);
     input.setAttribute("type", "checkbox");
     if (task.done) {
       input.setAttribute("checked", "checked");
     }
-    input.setAttribute("onchange", `onTaskChanged(this, '${task.id}-li')`);
     label.setAttribute("for", `${task.id}`);
 
     if (task.every != "") {
       span.innerText = ` (every ${timeToText(task.every)})`;
     }
 
+    // set delete icon
+    deleteSvg.innerHTML =
+      '<title>delete task</title><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />';
+    deleteSvg.setAttribute("viewBox", "0 0 24 24");
+    deleteSvg.setAttribute("class", "icon");
+    deleteSvg.setAttribute("name", "delete");
+
+    // events
+    input.setAttribute("onchange", `onTaskChanged(this, '${task.id}-li')`);
+    label.setAttribute("onmouseenter", `onTaskHovered(true, '${task.id}')`);
+    listEntry.setAttribute("onmouseleave", `onTaskHovered(false, '${task.id}')`);
+    deleteSvg.setAttribute("onmouseenter", "setSVGVisible(true, this, 'red')");
+    deleteSvg.setAttribute("onmouseleave", "setSVGVisible(false, this)");
+    deleteSvg.setAttribute("onclick", `removeTaskOnSVGClick('${task.id}')`)
+
+    // form the final element
     span.setAttribute("class", "not-important-text");
     label.innerText = task.task;
     label.appendChild(span);
     listEntry.appendChild(input);
     listEntry.appendChild(label);
+    listEntry.appendChild(deleteSvg);
 
+    // add to list
     if (!task.done) {
       taskList.appendChild(listEntry);
     } else if (task.done) {
