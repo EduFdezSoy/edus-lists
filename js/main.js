@@ -482,12 +482,9 @@ function setTitles(listName) {
   // set the list url to the href so the user can see the path on hover
   titleContainer.getElementsByTagName("a")[0].setAttribute("href", listUrl);
 
-  // set the url to this task
+  // prevent a from redirecting
   document.getElementById("listLink").addEventListener("click", (event) => {
     event.preventDefault();
-    navigator.clipboard.writeText(listUrl);
-    // TODO: change this alert with some nice css
-    alert("Task link copied to clipboard");
   });
 }
 
